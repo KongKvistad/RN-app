@@ -1,23 +1,33 @@
-// "node api.js" from root folder to start mysqlserver
-// "npm start" from root to start expo project
-
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, View, Text } from 'react-native';
 import { BarCodeScanner, Permissions } from 'expo';
+import AppNavigator from './navigation/AppNavigator';
 
-export default class BarcodeScannerExample extends React.Component {
-  state = {
-    hasCameraPermission: null,
-    dataSource: null,
+import Modal from "react-native-modal";
+import { withNativeAd } from 'expo/build/facebook-ads';
+
+export default class App extends React.Component {
+
+  constructor(props){
+    super(props);
+    this.state ={ 
+      isModalVisible: false,
+      dataSource: null,
+      hasCameraPermission: null,
+    }
   }
 
   async componentDidMount() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === 'granted' });
-    }
+    };
+
+  _toggleModal = () =>
+  this.setState({ isModalVisible: !this.state.isModalVisible });
 
   render() {
     const { hasCameraPermission } = this.state;
+    
 
     if (hasCameraPermission === null) {
       return <Text>Requesting for camera permission</Text>;
@@ -25,45 +35,42 @@ export default class BarcodeScannerExample extends React.Component {
     if (hasCameraPermission === false) {
       return <Text>No access to camera</Text>;
     }
-    if (this.state.dataSource === null){
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, justifyContent:"center" }}>
+        <Modal isVisible={this.state.isModalVisible}>
+          <View style={styles.modalWind}>
+            <FlatList
+            data={this.state.dataSource}
+            renderItem={({item}) => 
+            <Text>
+            Navn: {item.name},
+            Pris: {item.pris},
+            EAN-kode:{item.serial}
+            </Text>}
+            keyExtractor={({id}, index) => id}
+            />
+          </View>
+          <View>
+            <TouchableOpacity onPress={this._toggleModal}>
+              <Text>Hide me!</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
         <BarCodeScanner style={StyleSheet.absoluteFill}
           onBarCodeScanned={this.handleBarCodeScanned}
         />
       </View>
     );
-    } else if (this.state.dataSource !== null) {
-      return (
-      <View style={{alignItems: 'center'}}>
-          <Popup status={this.state.dataSource} />
-      </View>
-      );
-    }
-  } 
-
-  
-
+  };
+   
   handleBarCodeScanned = ({ type, data }) => {
-    //ip, hjemme http://10.0.0.102:3000/products/:1
-    //ip, biblo http://10.80.88.236:3000/products/:1
-    return fetch('http://10.22.204.78:3000/products/' + data)
+    return fetch('http://192.168.1.45:3000/products/' + data)
       .then((response) => response.json())
       .then((responseJson) => {
-
-        let serial = responseJson[0].serial;
-
-        if (data === JSON.stringify(serial)) {
           this.setState({
-            dataSource: JSON.stringify(responseJson[0]),
+            dataSource: responseJson.response,
+            isModalVisible: true
           })
-
-        }else {
-          alert(`the data is: ${serial}`);
-        };
-
-        
-
       })
       .catch((error) =>{
         console.error(error);
@@ -71,68 +78,13 @@ export default class BarcodeScannerExample extends React.Component {
   }
 }
 
+const styles = StyleSheet.create({
+  modalWind: {
+    backgroundColor: "white",
+    borderRadius: 25,
+  },
 
-class Popup extends React.Component {
-  render() {
-    return (
-      <View style={{alignItems: 'center'}}>
-        <Text>{this.props.status}</Text>
-      </View>
-    );
-  }
-}
+  
+  
+});
 
-// import React from 'react';
-// import { Stylesheet, FlatList, ActivityIndicator, Text, View  } from 'react-native';
-// import { BarCodeScanner, Permissions } from 'expo';
-
-// export default class FetchExample extends React.Component {
-
-//   constructor(props){
-//     super(props);
-//     this.state ={ isLoading: true}
-//   }
-
-//   componentDidMount(){
-//     return fetch('http://10.0.0.102:3000/user/:1')
-//       .then((response) => response.json())
-//       .then((responseJson) => {
-
-//         this.setState({
-//           isLoading: false,
-//           dataSource: responseJson,
-//         }, function(){
-
-//         });
-
-//       })
-//       .catch((error) =>{
-//         console.error(error);
-//       });
-//   }
-
-
-
-//   render(){
-
-//     if(this.state.isLoading){
-//       return(
-//         <View style={{flex: 1, padding: 20}}>
-//           <ActivityIndicator/>
-//         </View>
-//       )
-//     }
-
-//     return(
-//       <View style={{flex: 1}}>
-//         <FlatList
-//           data={this.state.dataSource}
-//           renderItem={({item}) => <Text>{item.type}, {item.serial}</Text>}
-//           keyExtractor={({id}, index) => id}/>
-//         <View style={{flex: 1}}>
-//           <Text>lol</Text>
-//         </View>
-//       </View>
-//     );
-//   }
-// }
