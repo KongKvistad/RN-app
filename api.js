@@ -33,8 +33,9 @@ app.get('/products/:id', (req, res) => {
 	connection.query("SELECT * FROM productdata WHERE serial ="+ req.params.id + ";", (err, result, rows, fields) => {
         if (err) {
 			throw err;
-		} else if (result.length <= 0) {
-			res.send([{}]);
+		} else if (result.length === 0) {
+			res.send(JSON.stringify({"status":200, "error": null, "response": [
+				{id: "0", serial: "404", type: 0, name: "...", pris: 0, spend: 0}]}));
 			console.log(result.length)
 		} else {
 			console.log(result);
@@ -44,8 +45,17 @@ app.get('/products/:id', (req, res) => {
 })
 
 app.post('/update/:id', (req, res) => {
-	console.log (req.body.firstParam, req.params.id);
-	connection.query("UPDATE `productdata` SET `spend` = 300 WHERE `id` = 1;", (err, result,) => {
+	console.log ("new price: "+ req.body.newprice, req.params.id);
+
+	
+	connection.query("UPDATE `productdata` SET `spend` = `spend` +" + req.body.newprice +" WHERE `id` = " +req.params.id +";", (err, result,) => {
+		if (err) {
+			throw err;
+		} else {
+			console.log(result);
+		}
+	})
+	connection.query("UPDATE `productdata` SET `pris` = " + req.body.newprice +" WHERE `id` = " +req.params.id +";", (err, result,) => {
 		if (err) {
 			throw err;
 		} else {
