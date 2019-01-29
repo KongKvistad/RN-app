@@ -52,11 +52,11 @@ export default class App extends React.Component {
               <Text style= {styles.text}>Navn: {item.name}</Text>
               <View style={{flex: 1, flexDirection: "row", justifyContent: 'center' }}>
                 <Text style= {styles.text}>Pris: </Text>
-                <TextInput style={styles.text} underlineColorAndroid= "gray" placeholder={this.state.productPrice} onChangeText={(text) => this.setState({productPrice: text})}></TextInput>
+                <TextInput style={styles.text} underlineColorAndroid= "gray" placeholder={item.pris.toString()} onChangeText={(text) => this.setState({productPrice: text})}></TextInput>
               </View>
               <Text style= {styles.ean}>EAN-kode: {item.serial}</Text>
               <View style={styles.buttView}>
-                <Button onPress={() => this.makeChange(this.state.productPrice)} title={"Legg til"}></Button>
+                <Button onPress={() => this.makeChange(parseInt(this.state.productPrice))} title={"Legg til 1 stk."}></Button>
               </View>
             </View>}
             />
@@ -70,28 +70,46 @@ export default class App extends React.Component {
   };
 
   makeChange = (nypris) => {    
-    let gammelpris = this.state.dataSource[0].pris.toString();
-    if (gammelpris === nypris){
-      let finalpris = parseInt(gammelpris) + parseInt(nypris);
-      return fetch('http://192.168.1.45:3000/update/' + finalpris, {
+    let gammelpris = this.state.dataSource[0].pris;
+   
+    if (gammelpris !== nypris){
+    return fetch('http://192.168.1.47:3000/update/' + this.state.dataSource[0].id, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        newprice: nypris,
+      }),
+    })
+    .then(alert("endret prisen på " + this.state.dataSource[0].name + " fra " + gammelpris + " til " + nypris+". la til 1 stk."))
+    .then(this.setState({
+      isModalVisible: false,
+    }))
+    .catch((error) => {
+      console.error(error);
+    });
+
+
+    } else {
+      return fetch('http://192.168.1.47:3000/update/' + this.state.dataSource[0].id, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstParam: 'yourValue',
-          secondParam: 'yourOtherValue',
+          newprice: nypris,
         }),
-      }).then((response) => response.json())
-          .then((responseJson) => {
-            return responseJson.movies;
-          })
-          .catch((error) => {
-            console.error(error);
-          });
-    } else {
-      alert("different")
+      })
+      .then(alert("la til 1 stk " + this.state.dataSource[0].name + " til en verdi av " + gammelpris))
+      .then(this.setState({
+        isModalVisible: false,
+      }))
+      .catch((error) => {
+        console.error(error);
+      });
     }
 
       
@@ -100,7 +118,7 @@ export default class App extends React.Component {
 
   
   handleBarCodeScanned = ({ type, data }) => {
-    return fetch('http://192.168.1.45:3000/products/' + data)
+    return fetch('http://192.168.1.47:3000/products/' + data)
       .then((response) => response.json())
       .then((responseJson) => {
           this.setState({
@@ -108,7 +126,7 @@ export default class App extends React.Component {
             productPrice: responseJson.response[0].pris.toString(),
             isModalVisible: true,
           })
-      })
+      })   
       .catch((error) =>{
         console.error(error);
       });
