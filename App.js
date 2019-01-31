@@ -15,7 +15,7 @@ export default class App extends React.Component {
       isModalVisible: false,
       dataSource: null,
       hasCameraPermission: null,
-      productPrice: null,
+      localEan: null,
     }
   }
 
@@ -43,20 +43,23 @@ export default class App extends React.Component {
         <Modal isVisible={this.state.isModalVisible}>
           <View style={styles.modalWind}>
             <Text style= {styles.X} onPress={this._toggleModal}>X</Text>
-            <Text style= {styles.heading}>Er dette ditt produkt?</Text>
+            <Text style= {styles.heading}>{`Er dette ditt \nprodukt?`}</Text>
             <FlatList
             data={this.state.dataSource}
-            keyExtractor={({id}, index) => id}
+            keyExtractor={({id}, index) => id.toString()}
             renderItem={({item}) => 
             <View style={{alignItems: "center"}}>
-              <Text style= {styles.text}>Navn: {item.name}</Text>
               <View style={{flex: 1, flexDirection: "row", justifyContent: 'center' }}>
-                <Text style= {styles.text}>Pris: </Text>
-                <TextInput style={styles.text} underlineColorAndroid= "gray" placeholder={item.pris.toString()} onChangeText={(text) => this.setState({productPrice: text})}></TextInput>
+                <Text style= {styles.text}>Navn: </Text>
+                <TextInput style={styles.text} underlineColorAndroid= "darkgray" placeholder={item.name} placeholderTextColor="gray" onChangeText={(text) => {this.state.dataSource[0].name = text}}></TextInput>
               </View>
-              <Text style= {styles.ean}>EAN-kode: {item.serial}</Text>
+              <View style={{flex: 1, flexDirection: "row", justifyContent: 'flex-start' }}>
+                <Text style= {styles.text}>Pris: </Text>
+                <TextInput style={styles.text} underlineColorAndroid= "darkgray" placeholder={item.pris.toString()} placeholderTextColor="gray" onChangeText={(text) => {this.state.dataSource[0].pris = text}}></TextInput>
+              </View>
+              <Text style= {styles.ean}>EAN-kode: {this.state.localEan}</Text>
               <View style={styles.buttView}>
-                <Button onPress={() => this.makeChange(parseInt(this.state.productPrice))} title={"Legg til 1 stk."}></Button>
+                <Button onPress={() => this.makeChange()} title={"Legg til 1 stk."}></Button>
               </View>
             </View>}
             />
@@ -69,30 +72,12 @@ export default class App extends React.Component {
     );
   };
 
-  makeChange = (nypris) => {    
-    let gammelpris = this.state.dataSource[0].pris;
-   
-    if (gammelpris !== nypris){
-    return fetch('http://192.168.1.47:3000/update/' + this.state.dataSource[0].id, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        newprice: nypris,
-      }),
-    })
-    .then(alert("endret prisen på " + this.state.dataSource[0].name + " fra " + gammelpris + " til " + nypris+". la til 1 stk."))
-    .then(this.setState({
-      isModalVisible: false,
-    }))
-    .catch((error) => {
-      console.error(error);
-    });
 
+  makeChange = () => {    
+    let ean = this.state.localEan;
+    let serial = this.state.dataSource[0].serial
 
-    } else {
+    if (ean !== serial) {
       return fetch('http://192.168.1.47:3000/update/' + this.state.dataSource[0].id, {
         method: 'POST',
         headers: {
@@ -100,20 +85,24 @@ export default class App extends React.Component {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          newprice: nypris,
+          serial: this.state.dataSource[0].localEan,
+          type: 30,
+          name: this.state.dataSource[0].name,
+          price: this.state.dataSource[0].name,
+
         }),
       })
-      .then(alert("la til 1 stk " + this.state.dataSource[0].name + " til en verdi av " + gammelpris))
+      .then(alert("la til nytt produkt!"))
       .then(this.setState({
         isModalVisible: false,
       }))
       .catch((error) => {
         console.error(error);
       });
+    
+    } else if (ean === serial) {
+      alert("match!")
     }
-
-      
-
   }
 
   
@@ -123,7 +112,7 @@ export default class App extends React.Component {
       .then((responseJson) => {
           this.setState({
             dataSource: responseJson.response,
-            productPrice: responseJson.response[0].pris.toString(),
+            localEan: data,
             isModalVisible: true,
           })
       })   
@@ -132,6 +121,7 @@ export default class App extends React.Component {
       });
   }
 }
+
 
 const styles = StyleSheet.create({
   modalWind: {
@@ -146,7 +136,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   heading: {
-    fontSize: 25,
+    fontSize: 40,
     textAlign: "center",
     paddingBottom: 35,
     paddingTop: 35,
@@ -155,6 +145,8 @@ const styles = StyleSheet.create({
     color: "orange",
     fontSize: 35,
     textAlign: 'center',
+    paddingBottom:5,
+    
   },
   ean: {
     color: "orange",
