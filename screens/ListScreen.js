@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, View, Text, StyleSheet } from 'react-native';
+import { FlatList, View, Text, StyleSheet, RefreshControl, Dimensions } from 'react-native';
 
 
 
@@ -7,16 +7,18 @@ import { FlatList, View, Text, StyleSheet } from 'react-native';
 export default class ListScreen extends React.Component {
     static navigationOptions = {
       title: 'Oversikt',
+      tabBarLabel: ({ text }) => (
+        <Text style={{fontFamily: "poetsenone", fontSize: 26, color: "white", shadowColor: "black", textShadowOffset: {width: 3,height: 2}}}>Oversikt</Text>
+      ),
       tabBarOptions: {
-        labelStyle: {
-          fontSize: 12,
-        },
-        tabStyle: {
-  
+        indicatorStyle: {
+          backgroundColor: "#FFB03C"
         },
         style: {
+          height: 60,
           marginTop: 23,
           backgroundColor: '#423D3D',
+          textAlignVertical: "center"
         },
       }
     };
@@ -25,21 +27,29 @@ export default class ListScreen extends React.Component {
       super(props);
       this.state ={ 
         hasLoaded: null,
+        refreshing: false,
       }
     };
 
-    componentDidMount () {
-      return fetch('http://192.168.1.48:3000/getlist/' )
+    _onRefresh = () => {
+      this.setState({refreshing: true});
+      return fetch('https://serene-atoll-53191.herokuapp.com/getlist/' )
         .then((response) => response.json())
         .then((responseJson) => {
             this.setState({
-              hasLoaded: responseJson.response
+              hasLoaded: responseJson.response,
+              refreshing: false
             })
         })   
         .catch((error) =>{
           console.error(error);
         });
-        
+    }
+  
+    componentDidMount () {
+      this._onRefresh()
+      let penis = Dimensions.get("window");
+      console.log(penis)
       } 
 
     render() {
@@ -48,6 +58,8 @@ export default class ListScreen extends React.Component {
             <FlatList
             data={this.state.hasLoaded}
             keyExtractor={({id}, index) => id.toString()}
+            refreshing={this.state.refreshing}
+            onRefresh={this._onRefresh}
             renderItem={({item}) => 
             <View style={styles.container}>
               <Text style={styles.text}>{item.name}</Text>
