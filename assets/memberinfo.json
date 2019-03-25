@@ -1,0 +1,41 @@
+{
+    "kollektivet": [
+    {
+        "id": 1,
+        "name": "eirik",
+        "spending": 100
+    },
+    {
+        "id": 2,
+        "name": "kristian",
+        "spending": 100
+    },
+    {
+        "id": 3,
+        "name": "eirik",
+        "spending": 200
+    },
+    {
+        "id": 4,
+        "name": "hannah",
+        "spending": 200
+    }
+    ],
+    "naboen": [
+        {
+            "id": 1,
+            "name": "rand1",
+            "spending": 100
+        },
+        {
+            "id": 2,
+            "name": "rand2",
+            "spending": 100
+        },
+        {
+            "id": 3,
+            "name": "rand3",
+            "spending": 100
+        }
+        ]
+}

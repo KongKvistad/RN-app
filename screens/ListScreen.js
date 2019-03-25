@@ -48,8 +48,6 @@ export default class ListScreen extends React.Component {
   
     componentDidMount () {
       this._onRefresh()
-      let penis = Dimensions.get("window");
-      console.log(penis)
       } 
 
     render() {
