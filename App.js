@@ -8,9 +8,16 @@ import HomeScreen from "./screens/HomeScreen";
 import ListScreen from "./screens/ListScreen";
 import GroupScreen from "./screens/GroupScreen";
 import SignInScreen from "./screens/signin";
+import RegScreen from  "./screens/RegScreen"
 
-const AuthStack = createStackNavigator({ SignIn: SignInScreen});
+
 const ListStack = createStackNavigator({ list: ListScreen});
+const AuthStack = createStackNavigator(
+  { 
+    SignIn: SignInScreen,
+    RegUser: RegScreen,
+  }
+);
 const AppNavigator = createMaterialTopTabNavigator(
   {
     Home: HomeScreen,

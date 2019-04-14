@@ -4,6 +4,7 @@ import {Svg} from "expo";
 import ListyList from '../components/grouplabel';
 
 
+
 export default class GroupScreen extends React.Component {
     static navigationOptions = {
         title: 'grupper',
@@ -53,14 +54,7 @@ export default class GroupScreen extends React.Component {
    
 
 
-      componentWillMount(){
-        AsyncStorage.getItem('username').then((value) => {
-          this.setState({
-            localStore: value,
-          });
-          
-        });
-      }
+
       
 
       render() {
@@ -69,7 +63,7 @@ export default class GroupScreen extends React.Component {
         
         return (
           <View style={styles.masterview}>
-            <ListyList/>
+            <ListyList navigation = {this.props.navigation}/>
             <Text>{this.state.localStore}</Text>
           </View>
         );

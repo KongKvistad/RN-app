@@ -1,33 +1,30 @@
 import React from 'react';
-import { FlatList, View, Text, StyleSheet, RefreshControl, Dimensions } from 'react-native';
+import { FlatList, View, Text, StyleSheet, RefreshControl, Dimensions, Button, SectionList } from 'react-native';
+import {createStackNavigator, createSwitchNavigator } from "react-navigation";
 
 
 
 
 export default class ListScreen extends React.Component {
-    static navigationOptions = {
-      title: 'Oversikt',
-      tabBarLabel: ({ text }) => (
-        <Text style={{fontFamily: "poetsenone", fontSize: 26, color: "white", shadowColor: "black", textShadowOffset: {width: 3,height: 2}}}>Oversikt</Text>
-      ),
-      tabBarOptions: {
-        indicatorStyle: {
-          backgroundColor: "#FFB03C"
-        },
-        style: {
-          height: 60,
-          marginTop: 23,
-          backgroundColor: '#423D3D',
-          textAlignVertical: "center"
-        },
-      }
-    };
+
+  
+    static navigationOptions = ({ navigation }) => {
+      return {
+        headerTitle: "penis",
+        headerLeft: (
+          <Text
+          onPress={() => navigation.navigate("Groups")}
+          >  ◄</Text>
+        ),
+      };
+    }
 
     constructor(props){
       super(props);
       this.state ={ 
         hasLoaded: null,
         refreshing: false,
+        
       }
     };
 
@@ -36,10 +33,12 @@ export default class ListScreen extends React.Component {
       return fetch('https://serene-atoll-53191.herokuapp.com/getlist/' )
         .then((response) => response.json())
         .then((responseJson) => {
+         
             this.setState({
               hasLoaded: responseJson.response,
               refreshing: false
             })
+          
         })   
         .catch((error) =>{
           console.error(error);
@@ -47,8 +46,10 @@ export default class ListScreen extends React.Component {
     }
   
     componentDidMount () {
+
       this._onRefresh()
       } 
+
 
     render() {
         return (

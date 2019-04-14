@@ -7,11 +7,14 @@ import {
   FlatList,
   Text,
   TouchableOpacity,
+  TouchableHighlight,
+  AsyncStorage,
   View,
 } from 'react-native';
 import {Svg} from "expo";
 
 import * as memberinfo from '../assets/memberinfo.json';
+
 
 export default class ListyList extends React.Component {
 
@@ -20,23 +23,9 @@ export default class ListyList extends React.Component {
     	this.state = {
        isclicked: "red",
        numcols: memberinfo.kollektivet,
-     	dataSource: [{
-        "id": 1,
-        "name": "kollektivet",
-        "members": "eirik, kristian, erland, hannah"
-      },
-      {
-        "id": 2,
-        "name": "naboen",
-        "members": "rand1, rand2, rand3"
-      },
-      {
-        "id": 3,
-        "name": "random",
-        "members": "rand1, rand2, rand3, rand4, rand5"
-      }], 
+       data: [],
  		};
-
+  
    }
    
   renderCanvas = (chosenGroup) => {
@@ -46,6 +35,43 @@ export default class ListyList extends React.Component {
 
     
   }
+componentDidMount () {
+  this.retrieveItem("id", "username", "password", "groups").then((goals) => {
+    
+      
+    
+    console.log("pre-append:", this.state.data)
+    this.state.data.forEach(e => {
+      this.getMembers(e.group_id)
+    })
+  })  
+}
+getMembers = async (id) => {
+  let arr = []
+  await fetch('http://192.168.1.48:3000/groupmembers/' + id)
+        .then( res => res.json())
+        .then( res =>  {
+          res.response.forEach(e => {
+            arr.push(e)
+          })  
+        })
+        console.log(arr)
+}
+
+  
+  async retrieveItem(key1, key2, key3, key4) {
+    try {
+      const retrievedItem =  await AsyncStorage.multiGet([key1, key2, key3, key4])
+      const item = JSON.parse(retrievedItem[3][1])
+      return item
+    } catch (error) {
+      console.log(error.message);
+    }
+    return
+  }
+
+
+  
  	
 
   handlerButtonOnClick = (item) => {
@@ -57,7 +83,11 @@ export default class ListyList extends React.Component {
     })
     //this.props.navigation.navigate('List');
     }
-
+  navigate=(clickedGroup)=> {
+    //props passed in from groupscreenjs:
+    const {navigate} = this.props.navigation
+    navigate('List')
+  }
 
   render() {
     //sjekk denne senere
@@ -70,7 +100,6 @@ export default class ListyList extends React.Component {
           
           contentContainerStyle={{flexGrow: 1, justifyContent: 'center'}}
           horizontal = {true}
-          //replace this with numcols when possible
           data={this.state.numcols}
           keyExtractor={({id}, index) => id.toString()}
           renderItem={({item}) => 
@@ -79,19 +108,24 @@ export default class ListyList extends React.Component {
           />
         </View>
     	<FlatList
-  		data={this.state.dataSource}
-  		keyExtractor={({id}) => id.toString()}
+  		data={this.state.data}
+  		keyExtractor={({group_id}) => group_id.toString()}
   		extraData={this.state.refresh}
   		renderItem={({item}) => 
         <TouchableOpacity onPress= {() => this.handlerButtonOnClick(item)}
         style={[
           styles.userListText, 
           { 
-              backgroundColor: this.state.isclicked  === item.id ? 'gray' : 'white'
+              backgroundColor: this.state.isclicked  === item.group_id ? '#DFDFDF' : 'white'
           }]} 
         >
+          <View style= {{flex: 1, flexDirection: "row", justifyContent: "space-between"}}>
           <Text style={styles.text}>{item.name}</Text>
-          <Text style={styles.label}>{item.members}</Text>   
+            <TouchableHighlight style ={styles.button} onPress={() => this.navigate(item.id)}>
+              <Text style= {{fontFamily: "poetsenone", color: "white"}}>se mer ►</Text>
+            </TouchableHighlight>
+          </View>
+          <Text numberOfLines={1} style={[styles.label, {width: 230}]}>{item.members}</Text>   
         </TouchableOpacity>
   		}
 		  />
@@ -139,12 +173,15 @@ const styles = StyleSheet.create({
     text: {
       fontFamily: 'poetsenone',
       fontSize:30,
+      paddingTop: 10,
     },
     label: {
       fontFamily: 'PoorStory',
       fontSize:30,
       textAlign: "left",
       borderRadius: 5,
+      paddingTop: 10,
+      
     },
     masterview:{
       padding: 10,
@@ -153,6 +190,16 @@ const styles = StyleSheet.create({
       borderWidth: 2,
       transform: [{ scaleY: -1 }]
     },
+    button: {
+      backgroundColor: "orange",
+      borderRadius: 10,
+      width: 70,
+      height: 40,
+      top: 20,
+      justifyContent:"center",
+      alignItems : "center"
+
+    }
 
 });
 
