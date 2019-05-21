@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, View, AsyncStorage, Image, StyleSheet, KeyboardAvoidingView, Text } from 'react-native';
+import { Button, View, AsyncStorage, Image, StyleSheet, KeyboardAvoidingView, TouchableOpacity, Text } from 'react-native';
 
 import { AuthSession, } from 'expo';
 import { TextInput } from 'react-native-gesture-handler';
@@ -32,11 +32,13 @@ export default class SignInScreen extends React.Component {
           source={require('../assets/images/komodo2.png')}
         />
         <View style ={{flex: 1, alignItems: "center"}}>
-        <TextInput style = {styles.text} placeholder={"brukernavn.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.username = text}}></TextInput>
-        <TextInput style = {styles.text} placeholder={"passord.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.password = text}}></TextInput>
+        <TextInput style = {styles.text} placeholder={"Brukernavn.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.username = text}}></TextInput>
+        <TextInput style = {styles.text} placeholder={"Passord.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.password = text}}></TextInput>
         
-        <Button title="Sign in!" onPress={this._signInAsync} />
-        <Text style = {{textDecorationLine: 'underline', paddingTop: 15}} onPress= {() => this.props.navigation.navigate("RegUser")}>ikke registrert?</Text>
+        <TouchableOpacity style ={styles.loginbutton} onPress={this._signInAsync}>
+          <Text style={{fontFamily:"abel", fontSize: 20}}>Logg inn</Text>
+        </TouchableOpacity>
+        <Text style = {{textDecorationLine: 'underline', fontFamily:"abel", fontSize: 18, marginTop: 30}} onPress= {() => this.props.navigation.navigate("RegUser")}>ikke registrert?</Text>
         </View>
       </View>
     );
@@ -44,7 +46,7 @@ export default class SignInScreen extends React.Component {
   
   _signInAsync = async () => {
     
-    await fetch('http://192.168.1.48:3000/CheckUser', {
+    await fetch('https://serene-atoll-53191.herokuapp.com/CheckUser', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -70,12 +72,11 @@ export default class SignInScreen extends React.Component {
       });
   };
   getGroups = async (id) => {
-    await fetch('http://192.168.1.48:3000/getgroups/' + id)
+    await fetch('https://serene-atoll-53191.herokuapp.com/getgroups/' + id)
           .then( res => res.json())
           .then( res =>  {
             try {
-              //we want to wait for the Promise returned by AsyncStorage.setItem()
-              //to be resolved to the actual value before returning the value
+              
               var jsonOfItem = AsyncStorage.setItem("groups", JSON.stringify(res.response));
               this.retrieveItem("id", "username", "password", "groups")
               return jsonOfItem;
@@ -101,7 +102,6 @@ export default class SignInScreen extends React.Component {
   async retrieveItem(key1, key2, key3, key4) {
     try {
       const retrievedItem =  await AsyncStorage.multiGet([key1, key2, key3, key4])
-      //console.log(JSON.parse(retrievedItem[3][1]));
       return retrievedItem
     } catch (error) {
       console.log(error.message);
@@ -130,11 +130,11 @@ const styles = StyleSheet.create({
     text: {
         
         color: "white",
-        fontSize: 35,
+        fontSize: 30,
         textAlign: 'left',
-        fontFamily:"PoorStory",
-        paddingLeft: 10,
-        marginBottom: 10,
+        fontFamily:"abel",
+        paddingLeft: 5,
+        marginBottom: 30,
         borderBottomWidth: 1,
         borderBottomColor: "white",
     
@@ -142,5 +142,13 @@ const styles = StyleSheet.create({
         
 
 
+    },
+    loginbutton: {
+      width: 120,
+      height:40,
+      backgroundColor: "white",
+      justifyContent: "center",
+      alignItems:"center",
+      borderRadius: 10
     }
 })

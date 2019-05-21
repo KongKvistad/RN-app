@@ -11,7 +11,11 @@ import SignInScreen from "./screens/signin";
 import RegScreen from  "./screens/RegScreen"
 
 
-const ListStack = createStackNavigator({ list: ListScreen});
+const ListStack = createStackNavigator(
+  { 
+    list: ListScreen
+  }
+);
 const AuthStack = createStackNavigator(
   { 
     SignIn: SignInScreen,
@@ -25,7 +29,7 @@ const AppNavigator = createMaterialTopTabNavigator(
    
   },
   {
-    initialRouteName: "Home"
+    initialRouteName: "Groups"
   },
 );
 const AppContainer = createAppContainer(createSwitchNavigator(
@@ -51,7 +55,8 @@ export default class App extends React.Component {
     try {
       await Font.loadAsync({
         poetsenone: require('./assets/fonts/poetsenone.ttf'),
-        PoorStory: require('./assets/fonts/PoorStory.ttf')
+        PoorStory: require('./assets/fonts/PoorStory.ttf'),
+        abel: require('./assets/fonts/Abel-Regular.ttf')
       });
       this.setState({ loading: false });
     } catch (error) {

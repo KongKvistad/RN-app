@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Image,
@@ -13,106 +14,116 @@ import {
 } from 'react-native';
 import {Svg} from "expo";
 
-import * as memberinfo from '../assets/memberinfo.json';
-
 
 export default class ListyList extends React.Component {
 
-	constructor(props) {
-    	super(props);
-    	this.state = {
-       isclicked: "red",
-       numcols: memberinfo.kollektivet,
-       data: [],
- 		};
+  constructor(props) {
+      super(props);
+      this.state = {
+       isclicked: null,
+       numcols: null,
+       data: props.groups,
+       total: 0,
+    };
   
    }
+
    
-  renderCanvas = (chosenGroup) => {
-    this.setState({
-      numcols: memberinfo[chosenGroup]
-    })
-
-    
-  }
-componentDidMount () {
-  this.retrieveItem("id", "username", "password", "groups").then((goals) => {
-    
-      
-    
-    console.log("pre-append:", this.state.data)
-    this.state.data.forEach(e => {
-      this.getMembers(e.group_id)
-    })
-  })  
-}
-getMembers = async (id) => {
-  let arr = []
-  await fetch('http://192.168.1.48:3000/groupmembers/' + id)
-        .then( res => res.json())
-        .then( res =>  {
-          res.response.forEach(e => {
-            arr.push(e)
-          })  
-        })
-        console.log(arr)
+ 
+componentWillReceiveProps(props) {
+  this.setState({
+    data: props.groups
+  })
 }
 
-  
-  async retrieveItem(key1, key2, key3, key4) {
-    try {
-      const retrievedItem =  await AsyncStorage.multiGet([key1, key2, key3, key4])
-      const item = JSON.parse(retrievedItem[3][1])
-      return item
-    } catch (error) {
-      console.log(error.message);
-    }
-    return
-  }
 
 
-  
- 	
-
-  handlerButtonOnClick = (item) => {
-    this.renderCanvas(item.name)
-
-  	this.setState({
-      isclicked: item.id,
-  		refresh: !this.state.refresh
+  handlerButtonOnClick = (item, index) => {
+    let total = 0;
+    item.arr.forEach(e => {
+      total = total + e.spend
     })
+
+      this.setState({
+        isclicked: item.group_id,
+        refresh: !this.state.refresh,
+        numcols: this.state.data[index].arr,
+        total: total
+      })
+
     //this.props.navigation.navigate('List');
     }
-  navigate=(clickedGroup)=> {
-    //props passed in from groupscreenjs:
-    const {navigate} = this.props.navigation
-    navigate('List')
-  }
-
-  render() {
-    //sjekk denne senere
+    navigateToList=(clickedGroup)=> {
+    console.log("click:", clickedGroup.group_id)
+   
+    this.props.navigation.navigate("list", 
+      {
+        ChosenGroup: clickedGroup.group_id,
+        ChosenName: clickedGroup.name
+      })
     
+    //props passed in from groupscreenj
+    }
+
+    navigateToProduct=() => {
+      AsyncStorage.multiGet(["id", "groups"]).then(response => {
+        
+        let groupname = ""
+
+        JSON.parse(response[1][1]).forEach(e => {
+            if(e.group_id == this.state.isclicked) {
+              groupname = e.name
+            }
+          })
+
+        this.props.navigation.navigate("Home", 
+        {
+          added_by: response[0][1],
+          through_group: this.state.isclicked,
+          groupname: groupname
+        })
+      })
+    }
+
+rendernames = (item) =>{
+  
+    item.members = [] 
+    item.arr.forEach( e => {
+      item.members.push(e.username + ", ")
+    });
+
+    return item
+
+}
+  render() {
+    const { numcols } = this.state;
+    const produktKnapp = <TouchableOpacity style = {styles.produktKnapp} onPress={() => this.navigateToProduct()}>
+                          <Text style= {{color: "white", fontFamily: "poetsenone", fontSize: 18}}>Legg til produkt</Text>
+                         </TouchableOpacity>;
+    
+    const nullVerdi = null;
 
     return(
       <View style={styles.masterview}>
         <View style = {styles.canvas}>
+           {this.state.isclicked === null ? nullVerdi : produktKnapp}
           <FlatList
-          
           contentContainerStyle={{flexGrow: 1, justifyContent: 'center'}}
           horizontal = {true}
-          data={this.state.numcols}
-          keyExtractor={({id}, index) => id.toString()}
-          renderItem={({item}) => 
-          <MakeCanvas memberData = {item} numcols = {this.state.numcols}  />
+          data={numcols}
+          keyExtractor={({user_id, index}) => user_id.toString()}
+          extraData={this.state.total}
+          renderItem={({item, index}) => 
+          <MakeCanvas memberData = {item} numcols = {this.state.numcols} totalAmount = {this.state.total}  />
           }
           />
         </View>
-    	<FlatList
-  		data={this.state.data}
-  		keyExtractor={({group_id}) => group_id.toString()}
-  		extraData={this.state.refresh}
-  		renderItem={({item}) => 
-        <TouchableOpacity onPress= {() => this.handlerButtonOnClick(item)}
+      <FlatList
+      data={this.state.data}
+      keyExtractor={({group_id, index}) => group_id.toString()}
+      extraData={this.state.refresh}
+      renderItem={({item, index}) => 
+        <TouchableOpacity onPress= {() => this.handlerButtonOnClick(item, index)}
         style={[
           styles.userListText, 
           { 
@@ -121,24 +132,35 @@ getMembers = async (id) => {
         >
           <View style= {{flex: 1, flexDirection: "row", justifyContent: "space-between"}}>
           <Text style={styles.text}>{item.name}</Text>
-            <TouchableHighlight style ={styles.button} onPress={() => this.navigate(item.id)}>
+            <TouchableHighlight style ={styles.button} onPress={() => this.navigateToList(item)}>
               <Text style= {{fontFamily: "poetsenone", color: "white"}}>se mer ►</Text>
             </TouchableHighlight>
           </View>
-          <Text numberOfLines={1} style={[styles.label, {width: 230}]}>{item.members}</Text>   
+          <Text numberOfLines={1} style={[styles.label, {width: 240}]}>{this.rendernames(item).members}</Text>   
         </TouchableOpacity>
-  		}
-		  />
+      }
+      />
     </View>
 
-   	); 
+    ); 
   }
 }
 
 const MakeCanvas = (props) => {
-  
-  let spending = props.memberData.spending
+  const total = props.totalAmount
+  let spending = props.memberData.spend
   let divisor = props.numcols.length 
+  let members = props.memberData.username
+
+  
+  makeUp =(input) => {
+    if (input === null || input === undefined) {
+      return 0
+    } else {
+      // get percentage
+      return input / total * 100
+    }
+  } 
   
   
   let randomfill = ["#FFC46D", "#FFB343", "#FFA520", "#E29420", "#D29945", "#BB945B"]
@@ -147,13 +169,14 @@ const MakeCanvas = (props) => {
   let randomNumber = Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
   return (
     <View>
-    <Text style = {{transform: [{ scaleY: -1 }], marginLeft: (100 / divisor) - 15}}>{spending}</Text>
-    <Svg height={200} width={200 / divisor}>
+    <Text style = {{transform: [{ scaleY: -1 }], marginLeft: (100 / divisor) - 15}}>{makeUp(spending).toFixed(2) + "%"}</Text>
+    <Text style = {{transform: [{ scaleY: -1 }], marginLeft: (100 / divisor) - 15}}>{members.substring(0, 7)}</Text>
+    <Svg height={150} width={200 / divisor}>
       <Svg.Rect
       x={(100 / divisor) - 15}
       y={0}
-      width={30}
-      height={spending}
+      width={34}
+      height={makeUp(spending)}
       fill={randomfill[randomNumber]}
       />
     </Svg>
@@ -163,44 +186,54 @@ const MakeCanvas = (props) => {
 
 const styles = StyleSheet.create({      
     userListText: {
-        color: '#333',
-        backgroundColor: "blue"
+        borderRadius: 10
 
     },
-    masterview:{
-      padding: 10,
-    },
+
     text: {
       fontFamily: 'poetsenone',
       fontSize:30,
       paddingTop: 10,
+      paddingLeft: 15,
     },
     label: {
-      fontFamily: 'PoorStory',
-      fontSize:30,
+      fontFamily: 'abel',
+      fontSize:20,
       textAlign: "left",
-      borderRadius: 5,
-      paddingTop: 10,
+   
+      paddingTop: 5,
+      paddingBottom: 10,
+      paddingLeft: 15,
       
     },
     masterview:{
-      padding: 10,
+      padding: 0,
     }, 
     canvas: {
-      borderWidth: 2,
-      transform: [{ scaleY: -1 }]
+      transform: [{ scaleY: -1 }],
+      alignItems:"center"
     },
     button: {
       backgroundColor: "orange",
       borderRadius: 10,
-      width: 70,
+      width: 74,
       height: 40,
-      top: 20,
+      top: 25,
       justifyContent:"center",
-      alignItems : "center"
+      alignItems : "center",
+      marginRight: 15,
 
+    },
+    produktKnapp: {
+      transform: [{ scaleY: -1 }],
+      backgroundColor: "orange",
+      borderRadius: 5,
+      width: 150,
+      marginTop: 15,
+      marginBottom: 15,
+      height: 40,
+      justifyContent:"center",
+      alignItems : "center",
     }
 
 });
-
-

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, View, AsyncStorage, Image, StyleSheet, KeyboardAvoidingView, Text } from 'react-native';
+import { Button, View, AsyncStorage, Image, StyleSheet, KeyboardAvoidingView, TouchableOpacity, Text } from 'react-native';
 
 import { AuthSession, } from 'expo';
 import { TextInput } from 'react-native-gesture-handler';
@@ -28,17 +28,19 @@ export default class RegScreen extends React.Component {
     return (
       <View style = {styles.container}>
         <View style ={{flex: 1, alignItems: "center", justifyContent: "center"}}>
-        <TextInput style = {styles.text} placeholder={"brukernavn.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.username = text}}></TextInput>
-        <TextInput style = {styles.text} placeholder={"passord.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.password = text}}></TextInput>
+        <TextInput style = {styles.text} placeholder={"Brukernavn.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.username = text}}></TextInput>
+        <TextInput style = {styles.text} placeholder={"Passord.."} placeholderTextColor="white" onChangeText={(text) => {this.state.localStore.password = text}}></TextInput>
         
-        <Button title="registrer deg!" onPress= {this._registerAsync} />
+        <TouchableOpacity style ={styles.loginbutton} onPress={this._registerAsync}>
+          <Text style={{fontFamily:"abel", fontSize: 18}}>Registrer deg</Text>
+        </TouchableOpacity>
         </View>  
       </View>
     );
   }
   _registerAsync = async () => {
     //await AsyncStorage.multiSet([['username', JSON.stringify(this.state.localStore.username)], ["password", JSON.stringify(this.state.localStore.username)]]);
-    await fetch('http://192.168.1.48:3000/RegUser', {
+    await fetch('https://serene-atoll-53191.herokuapp.com/RegUser', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -56,7 +58,7 @@ export default class RegScreen extends React.Component {
         } else{
           this.storeItem(JSON.stringify(res.response.insertId),JSON.stringify(this.state.localStore.username), JSON.stringify(this.state.localStore.password));
           this.retrieveItem("id", "username", "password")
-          this.props.navigation.navigate('App'); 
+          this.props.navigation.navigate('SignIn'); 
         }
       })
       .catch((error) => {
@@ -104,12 +106,12 @@ const styles = StyleSheet.create({
     },
     text: {
         
-        color: "orange",
-        fontSize: 35,
+        color: "white",
+        fontSize: 30,
         textAlign: 'left',
-        fontFamily:"PoorStory",
+        fontFamily:"abel",
         paddingLeft: 10,
-        marginBottom: 10,
+        marginBottom: 20,
         borderBottomWidth: 1,
         borderBottomColor: "white",
     
@@ -117,5 +119,13 @@ const styles = StyleSheet.create({
         
 
 
+    },
+    loginbutton: {
+      width: 120,
+      height:40,
+      backgroundColor: "white",
+      justifyContent: "center",
+      alignItems:"center",
+      borderRadius: 10
     }
 })

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, View, Text, StyleSheet, RefreshControl, Dimensions, Button, SectionList } from 'react-native';
-import {createStackNavigator, createSwitchNavigator } from "react-navigation";
+import {createStackNavigator, createSwitchNavigator, NavigationEvents } from "react-navigation";
 
 
 
@@ -9,28 +9,34 @@ export default class ListScreen extends React.Component {
 
   
     static navigationOptions = ({ navigation }) => {
-      return {
-        headerTitle: "penis",
+      return {          
+        headerTitle: (<Text style={{fontFamily: "poetsenone", fontSize: 30, color: "white",shadowColor: "black", flex: 1, textAlign: "center", justifyContent: "center", right: 18, textShadowOffset: {width: 3,height: 2}}}>{navigation.state.params.ChosenName}</Text>),
         headerLeft: (
-          <Text
+          <Text style={{fontFamily: "poetsenone", fontSize: 30, color: "white",shadowColor: "black", textShadowOffset: {width: 3,height: 2}}}
           onPress={() => navigation.navigate("Groups")}
           >  ◄</Text>
         ),
+        headerStyle: {
+            height: 60,
+            backgroundColor: '#423D3D',
+            textAlignVertical: "center",
+          },
+
       };
     }
 
     constructor(props){
       super(props);
       this.state ={ 
-        hasLoaded: null,
+        hasLoaded: [],
         refreshing: false,
-        
+        refreshId: this.props.navigation.state.params.ChosenGroup
       }
     };
 
-    _onRefresh = () => {
+    _onRefresh = (id) => {
       this.setState({refreshing: true});
-      return fetch('https://serene-atoll-53191.herokuapp.com/getlist/' )
+      return fetch('https://serene-atoll-53191.herokuapp.com/getlist/' + this.state.refreshId )
         .then((response) => response.json())
         .then((responseJson) => {
          
@@ -38,63 +44,145 @@ export default class ListScreen extends React.Component {
               hasLoaded: responseJson.response,
               refreshing: false
             })
+            console.log("hello!", responseJson.response)
           
         })   
         .catch((error) =>{
           console.error(error);
         });
     }
+
   
     componentDidMount () {
-
-      this._onRefresh()
+      let id = this.props.navigation.state.params.ChosenGroup
+    
+      
+      this._onRefresh(id)
+      
+     
       } 
 
+    calculate =(data) => {
+      total = 0, 
+      data.forEach( i => {
+        i.arr.forEach(j => {
+          total = total + j.spend
+        })
+      });
+
+      return total
+    }
 
     render() {
+      
+     
         return (
           <View style={styles.masterview}>
+            <View style = {styles.overhead}>
+              <Text style = {styles.total}>Total:</Text>
+              <Text style= {styles.OHtext}>{this.calculate(this.state.hasLoaded)}.-</Text>
+            </View>
             <FlatList
             data={this.state.hasLoaded}
-            keyExtractor={({id}, index) => id.toString()}
+            keyExtractor={({user_id}, index) => user_id.toString()}
             refreshing={this.state.refreshing}
             onRefresh={this._onRefresh}
             renderItem={({item}) => 
-            <View style={styles.container}>
-              <Text style={styles.text}>{item.name}</Text>
-              <Text style={styles.label}>{item.spend}.-</Text>
+            <View>
+              <CustomComp data = {item}/>
             </View>
+
+            
+           
+            
             }
             />
+           
           </View>
         );
     };
 }
 
+const CustomComp = (props) =>{
+  
+
+  return(
+
+    <SectionList
+           sections={[
+             { title: props.data.username, data: props.data.arr }
+           ]}
+           renderSectionHeader={ ({section}) => <Text style= {styles.text}> { section.title } </Text> }
+           renderItem={ ({item}) => 
+           <View style ={styles.line}>
+            <Text style= {styles.listitems}> { item.name } </Text> 
+            <Text style= {styles.listitems}> { item.spend }.- </Text>
+           </View> }
+           keyExtractor={ (item, index) => index }
+         />
+
+    );
+}
+
 const styles = StyleSheet.create({
   masterview:{
-    padding: 30,
+    flex: 1
   },
-  container:{
+
+  overhead: {
+    left: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: 320,
+    height: 70,
+    backgroundColor: "orange",
+    borderRadius: 10,
+    marginBottom: 30,
+    marginTop: 30,
+  },
+
+  OHtext: {
+    fontFamily: 'poetsenone',
+    fontSize: 40,
+    color: 'white',
+    paddingRight: 20,
+
+
+  },
+  total: {
+    fontFamily: 'poetsenone',
+    fontSize: 40,
+    color: 'white',
+    paddingLeft: 20,
+    
+    
+  },
+
+  line:{
     flex: 1,
     flexDirection: "row",
-    borderBottomWidth: 2,
-    paddingTop: 15,
-    paddingBottom: 15,
+    
+    paddingTop: 10,
+    paddingBottom: 10,
     justifyContent: 'space-between',
 
   },
   text: {
-    fontFamily: 'PoorStory',
-    fontSize:30,
+    fontFamily: 'abel',
+    fontSize:26,
+
+    borderBottomWidth: 1,
+    borderTopWidth: 1,
+    borderColor: "#fbdec0",
+    paddingLeft: 20,
   },
-  label: {
-    fontFamily: 'PoorStory',
-    fontSize:30,
-    backgroundColor: "#F3F3F3",
-    width: 100,
-    textAlign: "center",
-    borderRadius: 5,
+  listitems: {
+    fontFamily: 'abel',
+    fontSize:22,
+    paddingLeft: 30,
+    paddingRight: 30
+    
   },
 
 });
